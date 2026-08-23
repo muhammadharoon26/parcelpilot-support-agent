@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: parcelpilot-support-agent
+    runtime: python
+    plan: free
+    # Both stores are built at release time from the pack committed in data/raw/.
+    buildCommand: >-
+      pip install -r requirements.txt &&
+      python scripts/load_structured_data.py &&
+      python scripts/ingest_documents.py
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: "3.11.9"

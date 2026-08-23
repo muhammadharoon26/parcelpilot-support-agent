@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+langgraph
+langgraph-checkpoint
+google-genai
+anthropic
+chromadb
+pandas
+openpyxl
+pdfplumber
+python-dotenv
+pydantic
+pytest

@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ParcelPilot Support</title>
+<style>
+  :root {
+    --bg: #0f1216; --panel: #171b21; --line: #262c35; --text: #e7ecf3;
+    --muted: #8b95a3; --accent: #4f8cff; --warn: #f0a03c; --ok: #3fbf7f;
+  }
+  :root {
+    /* One scale drives every gutter and type size, so the layout breathes with the viewport
+       instead of snapping between two hardcoded designs. */
+    --gutter: clamp(12px, 3vw, 28px);
+    --column: 900px;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; min-width: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; height: 100vh; height: 100dvh; display: flex; flex-direction: column;
+         overflow-x: hidden;
+         font: clamp(15px, 0.5vw + 14px, 16px)/1.55 ui-sans-serif, system-ui, -apple-system,
+               "Segoe UI", sans-serif;
+         background: var(--bg); color: var(--text); }
+
+  header { display: flex; align-items: center; flex-wrap: wrap; gap: 8px var(--gutter);
+           padding: clamp(10px, 2vw, 14px) var(--gutter);
+           border-bottom: 1px solid var(--line); background: var(--panel); }
+  header h1 { font-size: clamp(16px, 1vw + 13px, 18px); margin: 0; font-weight: 600;
+              letter-spacing: -0.2px; white-space: nowrap; }
+  .who-controls { display: flex; align-items: center; gap: 8px; flex: 1 1 260px; }
+  .who-controls label { color: var(--muted); font-size: 13px; white-space: nowrap; }
+  #account { flex: 1 1 auto; min-width: 0; text-overflow: ellipsis; }
+  header .meta { color: var(--muted); font-size: 13px; flex: 1 0 100%; }
+
+  select, button { font: inherit; border-radius: 8px; border: 1px solid var(--line);
+                   background: #1e242c; color: var(--text); padding: 8px 12px; cursor: pointer;
+                   min-height: 40px; }
+  button { flex: 0 0 auto; white-space: nowrap; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #06101f; font-weight: 600; }
+  button.ghost { background: transparent; }
+  button:disabled { opacity: 0.5; cursor: default; }
+
+  #log { flex: 1; overflow-y: auto; overflow-x: hidden; padding: var(--gutter);
+         display: flex; flex-direction: column; gap: clamp(14px, 2vw, 18px);
+         width: min(var(--column), 100%); margin: 0 auto; }
+  .msg { display: flex; flex-direction: column; gap: 8px; }
+  .msg .who { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  /* Long order ids, tokens and URLs must wrap rather than force the page sideways. */
+  .bubble { padding: 12px clamp(12px, 2vw, 16px); border-radius: var(--radius);
+            white-space: pre-wrap; overflow-wrap: anywhere; }
+  .user .bubble { background: #1d2a3f; align-self: flex-start; max-width: min(100%, 46rem); }
+  .bot .bubble { background: var(--panel); border: 1px solid var(--line); }
+
+  /* Rendered markdown: block layout supplies the spacing, so pre-wrap must not add its own. */
+  .bubble.md { white-space: normal; }
+  .bubble.md > :first-child { margin-top: 0; }
+  .bubble.md > :last-child { margin-bottom: 0; }
+  .bubble.md p { margin: 0 0 10px; }
+  .bubble.md h4 { margin: 16px 0 8px; font-size: 15px; font-weight: 600; letter-spacing: -0.1px; }
+  .bubble.md strong { font-weight: 650; color: #fff; }
+  .bubble.md em { font-style: italic; }
+  .bubble.md ul, .bubble.md ol { margin: 0 0 10px; padding-left: 22px; }
+  .bubble.md li { margin: 3px 0; }
+  .bubble.md li.cont { list-style: none; margin-left: -22px; }
+  .bubble.md code { background: #0d1117; border: 1px solid var(--line); border-radius: 4px;
+                    padding: 1px 5px; font-size: 0.9em;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .bubble.md hr { border: 0; border-top: 1px solid var(--line); margin: 14px 0; }
+  .bubble.md table { border-collapse: collapse; margin: 4px 0 12px; display: block;
+                     overflow-x: auto; max-width: 100%; }
+  /* Cells hold their width so a narrow screen scrolls the table instead of shredding every
+     word onto its own line. */
+  .bubble.md th, .bubble.md td { border: 1px solid var(--line); padding: 6px 10px;
+                                 text-align: left; white-space: nowrap; }
+  .bubble.md th { background: #1e242c; font-weight: 600; }
+
+  .tools { display: flex; flex-direction: column; gap: 6px; }
+  .tool { font-size: clamp(11px, 1.6vw, 13px); color: var(--muted); background: #12161c;
+          border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 6px;
+          padding: 6px 10px; overflow-wrap: anywhere;
+          font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .tool b { color: var(--text); font-weight: 600; }
+  .tool.action { border-left-color: var(--warn); }
+
+  .card { border: 1px solid var(--warn); background: #241d12; border-radius: var(--radius);
+          padding: clamp(12px, 2vw, 16px); }
+  .card h3 { margin: 0 0 6px; font-size: 13px; color: var(--warn);
+             text-transform: uppercase; letter-spacing: 0.06em; }
+  .card pre { white-space: pre-wrap; font: inherit; margin: 0 0 14px; overflow-wrap: anywhere; }
+  .card .row { display: flex; flex-wrap: wrap; gap: 10px; }
+  .card .row button { flex: 1 1 auto; }
+  .card.stale { border-color: var(--line); background: #16191f; color: var(--muted); }
+  .card.stale h3 { color: var(--muted); }
+
+  footer { border-top: 1px solid var(--line); background: var(--panel);
+           padding: clamp(10px, 2vw, 16px) var(--gutter);
+           padding-bottom: max(clamp(10px, 2vw, 16px), env(safe-area-inset-bottom)); }
+  form { display: flex; gap: 10px; width: min(var(--column), 100%); margin: 0 auto; }
+  input[type=text] { flex: 1 1 auto; min-width: 0; font: inherit; padding: 11px 14px;
+                     border-radius: 10px; border: 1px solid var(--line);
+                     background: #12161c; color: var(--text); }
+  .hint { display: flex; flex-wrap: wrap; gap: 6px 14px;
+          width: min(var(--column), 100%); margin: 10px auto 0;
+          color: var(--muted); font-size: 13px; }
+  .hint span { cursor: pointer; text-decoration: underline dotted; }
+
+  /* Wide screens: one header row, with the snapshot line pushed to the right rather than a
+     select stretched across the whole viewport. */
+  @media (min-width: 900px) {
+    .who-controls { flex: 0 1 auto; }
+    #account { max-width: 320px; }
+    header .meta { flex: 1 1 auto; text-align: right; }
+  }
+
+  /* The select already names the account, so the label goes as soon as it would be squeezed. */
+  @media (max-width: 720px) {
+    .who-controls label { display: none; }
+  }
+
+  /* Phones: give the account switcher its own row and reclaim vertical space. */
+  @media (max-width: 560px) {
+    header { gap: 8px; }
+    header h1 { flex: 1 1 auto; }
+    .who-controls { flex: 1 0 100%; }
+    header .meta { font-size: 11px; }
+    .msg .who { font-size: 11px; }
+    .hint { gap: 6px 12px; font-size: 12px; }
+  }
+
+  /* Landscape phones and other short viewports: shrink chrome, not the conversation. */
+  @media (max-height: 480px) {
+    header { padding-top: 6px; padding-bottom: 6px; }
+    header .meta { display: none; }
+    .hint { display: none; }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    #log { scroll-behavior: smooth; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>ParcelPilot Support</h1>
+  <div class="who-controls">
+    <label for="account">Signed in as</label>
+    <select id="account"></select>
+    <button id="switch" class="ghost">Switch</button>
+  </div>
+  <div class="meta" id="refTime"></div>
+</header>
+
+<div id="log"></div>
+
+<footer>
+  <form id="composer">
+    <input type="text" id="input" autocomplete="off" placeholder="Ask about an order, a credit, an SLA…" />
+    <button class="primary" id="send">Send</button>
+  </form>
+  <div class="hint">
+    <span data-q="Can I cancel ORD-1001 without a cancellation fee? Explain why.">cancellation fee</span>
+    <span data-q="A pickup is late because of carrier fault. Am I owed a service credit?">service credit</span>
+    <span data-q="Is my ticket TKT-501 past its first-response target?">SLA check</span>
+  </div>
+</footer>
+
+<script>
+let token = null;
+
+const el = (tag, cls, text) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined) n.textContent = text;
+  return n;
+};
+const log = document.getElementById("log");
+const scroll = () => log.scrollTop = log.scrollHeight;
+
+// --- Markdown ------------------------------------------------------------
+// The model answers in markdown. Escaping happens before any tag is produced, so model output
+// (which can echo customer text) can never inject HTML.
+
+const escapeHtml = (s) =>
+  s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+const inline = (s) =>
+  escapeHtml(s)
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|[^*\w])\*([^*\n]+)\*/g, "$1<em>$2</em>")
+    .replace(/(^|[^_\w])_([^_\n]+)_(?![\w_])/g, "$1<em>$2</em>");
+
+const cells = (row) => row.replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+
+function renderMarkdown(text) {
+  const lines = String(text).replace(/\r/g, "").split("\n");
+  const out = [];
+  let list = null;      // "ul" | "ol"
+  let para = [];
+
+  const closeList = () => { if (list) { out.push(`</${list}>`); list = null; } };
+  const closePara = () => {
+    if (para.length) { out.push(`<p>${para.join("<br>")}</p>`); para = []; }
+  };
+  const openList = (kind) => {
+    if (list !== kind) { closeList(); out.push(`<${kind}>`); list = kind; }
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    if (!line.trim()) { closePara(); closeList(); continue; }
+
+    // Pipe table: header row followed by a |---|---| separator.
+    if (/^\s*\|.*\|\s*$/.test(line) && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1] || "")) {
+      closePara(); closeList();
+      const head = cells(line.trim());
+      const rows = [];
+      i += 2;
+      while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) rows.push(cells(lines[i++].trim()));
+      i--;
+      out.push(
+        "<table><thead><tr>" + head.map((h) => `<th>${inline(h)}</th>`).join("") + "</tr></thead><tbody>" +
+        rows.map((r) => "<tr>" + r.map((c) => `<td>${inline(c)}</td>`).join("") + "</tr>").join("") +
+        "</tbody></table>"
+      );
+      continue;
+    }
+
+    const heading = line.match(/^(#{1,6})\s+(.*)$/);
+    if (heading) { closePara(); closeList(); out.push(`<h4>${inline(heading[2])}</h4>`); continue; }
+
+    if (/^\s*([-*_])\1{2,}\s*$/.test(line)) { closePara(); closeList(); out.push("<hr>"); continue; }
+
+    const bullet = line.match(/^\s*[-*+]\s+(.*)$/);
+    if (bullet) { closePara(); openList("ul"); out.push(`<li>${inline(bullet[1])}</li>`); continue; }
+
+    const numbered = line.match(/^\s*\d+[.)]\s+(.*)$/);
+    if (numbered) { closePara(); openList("ol"); out.push(`<li>${inline(numbered[1])}</li>`); continue; }
+
+    // A plain line directly under a list item is a continuation of that item.
+    if (list) { out.push(`<li class="cont">${inline(line.trim())}</li>`); continue; }
+
+    para.push(inline(line.trim()));
+  }
+  closePara();
+  closeList();
+  return out.join("");
+}
+
+function addMessage(who, text) {
+  const wrap = el("div", `msg ${who}`);
+  wrap.appendChild(el("div", "who", who === "user" ? "You" : "ParcelPilot Support"));
+  const bubble = el("div", "bubble");
+  if (who === "bot") {
+    bubble.classList.add("md");
+    bubble.innerHTML = renderMarkdown(text);
+  } else {
+    bubble.textContent = text;
+  }
+  wrap.appendChild(bubble);
+  log.appendChild(wrap);
+  scroll();
+  return wrap;
+}
+
+function addToolCalls(calls) {
+  if (!calls || !calls.length) return;
+  const wrap = el("div", "tools");
+  for (const c of calls) {
+    const row = el("div", "tool" + (c.tool === "create_escalation" ? " action" : ""));
+    row.appendChild(el("b", null, c.tool));
+    row.appendChild(document.createTextNode("  " + c.summary));
+    wrap.appendChild(row);
+  }
+  log.appendChild(wrap);
+  scroll();
+}
+
+function supersedeOpenCards() {
+  // A card the conversation has moved past can no longer be approved, so retire it visibly
+  // instead of leaving a live-looking button behind.
+  for (const card of document.querySelectorAll(".card.live")) {
+    card.classList.remove("live");
+    card.classList.add("stale");
+    card.querySelector(".row").replaceChildren(el("em", null, "Superseded by your next message. Nothing was created."));
+  }
+}
+
+function addConfirmCard(action) {
+  supersedeOpenCards();
+  const card = el("div", "card live");
+  card.appendChild(el("h3", null, "Confirmation required — nothing has been created yet"));
+  card.appendChild(el("pre", null, action.preview_text));
+  const row = el("div", "row");
+  const yes = el("button", "primary", "Confirm escalation");
+  const no = el("button", "ghost", "Cancel");
+  row.append(yes, no);
+  card.appendChild(row);
+  log.appendChild(card);
+  scroll();
+
+  const decide = async (path) => {
+    yes.disabled = no.disabled = true;
+    try {
+      const res = await post(`/actions/${action.id}/${path}`);
+      card.remove();
+      render(res);
+    } catch (err) {
+      card.remove();
+      addMessage("bot", err.message);
+    }
+  };
+  yes.onclick = () => decide("confirm");
+  no.onclick = () => decide("cancel");
+}
+
+function render(res) {
+  addToolCalls(res.tool_calls);
+  if (res.reply) addMessage("bot", res.reply);
+  if (res.pending_action) addConfirmCard(res.pending_action);
+}
+
+async function post(path, body) {
+  const res = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    // A crash returns HTML, not JSON, so read the body defensively before surfacing it.
+    const detail = await res.json().then((b) => b.detail).catch(() => null);
+    throw new Error(detail || `${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
+async function login(accountId) {
+  const session = await post("/login", { account_id: accountId });
+  token = session.session_token;
+  document.getElementById("refTime").textContent =
+    `${session.account_id} · dataset snapshot ${session.reference_time}`;
+  log.replaceChildren();
+  addMessage("bot", `Hi ${session.account_name}. Ask me about your orders, tickets, contract terms or ` +
+    `support SLAs. I'll tell you which source an answer came from, and escalate to a human when the ` +
+    `sources can't settle it.`);
+}
+
+async function boot() {
+  const accounts = await (await fetch("/accounts")).json();
+  const select = document.getElementById("account");
+  for (const a of accounts) {
+    select.appendChild(el("option", null, `${a.account_name} (${a.plan})`)).value = a.account_id;
+  }
+  await login(accounts[0].account_id);
+}
+
+document.getElementById("switch").onclick = () => login(document.getElementById("account").value);
+
+document.getElementById("composer").onsubmit = async (e) => {
+  e.preventDefault();
+  const input = document.getElementById("input");
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = "";
+  supersedeOpenCards();
+  addMessage("user", text);
+  const send = document.getElementById("send");
+  send.disabled = true;
+  const thinking = addMessage("bot", "…");
+  try {
+    const res = await post("/chat", { message: text });
+    thinking.remove();
+    render(res);
+  } catch (err) {
+    thinking.querySelector(".bubble").textContent = `Error: ${err.message}`;
+  } finally {
+    send.disabled = false;
+    input.focus();
+  }
+};
+
+for (const s of document.querySelectorAll(".hint span")) {
+  s.onclick = () => {
+    document.getElementById("input").value = s.dataset.q;
+    document.getElementById("input").focus();
+  };
+}
+
+boot();
+</script>
+</body>
+</html>
