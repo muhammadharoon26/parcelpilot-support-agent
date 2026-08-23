@@ -40,7 +40,10 @@ def test_document_search_never_returns_another_customers_agreement():
     # Query deliberately names the other customer's terms; the filter is server-side so it cannot match.
     results = document_search.search(NORTHSTAR, "LumenWorks fixed INR 300 failed pickup credit")["results"]
     assert results
-    assert all(r["source_file"] != "06_LumenWorks_Service_Agreement.pdf" for r in results)
+    assert all(r["source"] != "your signed Service Agreement" for r in results)
+    # Nothing the model receives may carry a raw filename.
+    assert "source_file" not in json.dumps(results)
+    assert ".pdf" not in json.dumps(results)
 
 
 def test_account_without_an_agreement_sees_only_general_documents():
@@ -52,7 +55,7 @@ def test_results_are_sorted_by_authority_and_deprecated_is_labelled():
     results = document_search.search(NORTHSTAR, "first response target for a P1 incident")["results"]
     assert [r["authority_rank"] for r in results] == sorted(r["authority_rank"] for r in results)
     for r in results:
-        if r["source_file"].startswith("02_"):
+        if r["source"] == "the superseded Support Policy v2":
             assert r["status"] == "deprecated"
 
 

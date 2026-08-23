@@ -75,7 +75,8 @@ def _account_profile(account_id: str, _: dict) -> dict:
     if not rows:
         return {"error": "Account not found"}
     account = rows[0]
-    account["has_custom_agreement"] = bool(account.get("contract_file"))
+    # The filename itself is internal plumbing; the model only needs to know an agreement exists.
+    account["has_custom_agreement"] = bool(account.pop("contract_file", None))
     return {"reference_time": reference_time(), "account": account}
 
 

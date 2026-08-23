@@ -4,7 +4,7 @@ from functools import lru_cache
 
 import chromadb
 
-from app.config import AUTHORITY_LABELS, CHROMA_COLLECTION, CHROMA_PATH, GENERAL_SCOPE
+from app.config import AUTHORITY_LABELS, CHROMA_COLLECTION, CHROMA_PATH, GENERAL_SCOPE, SOURCE_NAMES
 
 N_RESULTS = 8
 
@@ -27,7 +27,8 @@ def search(account_id: str, query: str) -> dict:
     chunks = [
         {
             "text": text,
-            "source_file": meta["source_file"],
+            # The customer-facing name, never the filename. See config.SOURCE_NAMES.
+            "source": SOURCE_NAMES[meta["source_file"]],
             "doc_type": meta["doc_type"],
             "status": meta["status"],
             "authority_rank": meta["authority_rank"],

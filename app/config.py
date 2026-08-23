@@ -80,6 +80,19 @@ DOCUMENT_REGISTRY: dict[str, dict[str, str | int]] = {
     },
 }
 
+# What a source is called when the agent cites it to a customer. Retrieval hands the model these
+# names instead of the filenames, so "05_Northstar_Logistics_Enterprise_Agreement.pdf" cannot reach
+# a customer-facing answer. Same idea as keeping account_id out of the tool schemas: the model
+# cannot leak what it was never given.
+SOURCE_NAMES: dict[str, str] = {
+    "05_Northstar_Logistics_Enterprise_Agreement.pdf": "your signed Enterprise Agreement",
+    "06_LumenWorks_Service_Agreement.pdf": "your signed Service Agreement",
+    "03_Cancellation_and_Service_Credit_SOP_v4.pdf": "the Cancellation and Service Credit SOP v4",
+    "01_Support_Policy_v3_CURRENT.pdf": "the current Support Policy v3",
+    "04_Product_Operations_Guide_and_Known_Issues.pdf": "the Product Operations Guide and Known Issues",
+    "02_Support_Policy_v2_DEPRECATED.pdf": "the superseded Support Policy v2",
+}
+
 AUTHORITY_LABELS: dict[int, str] = {
     1: "Customer-specific signed agreement (overrides general policy for this account)",
     2: "Current SOP",

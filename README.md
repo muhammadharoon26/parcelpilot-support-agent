@@ -4,7 +4,8 @@ A customer-facing support chatbot for ParcelPilot. A logged-in customer asks nat
 about their orders, contract terms, service credits and support SLAs. The agent answers from ranked
 sources, names the source it relied on, and escalates to a human rather than guessing.
 
-**Hosted demo:** _(add URL after deploying)_
+**Hosted demo:** <https://parcelpilot-support-agent-cs35.onrender.com/> (free tier, so the first request
+after an idle period takes about a minute to wake the service)
 **Notes:** [ARCHITECTURE_NOTE.md](ARCHITECTURE_NOTE.md) · [PRODUCT_NOTE.md](PRODUCT_NOTE.md) · [AI_TOOL_USAGE.md](AI_TOOL_USAGE.md)
 
 The two guarantees worth looking at first are enforced in code, not in the prompt:

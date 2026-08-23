@@ -30,7 +30,7 @@ class AgentState(TypedDict):
 def _summarise(name: str, args: dict, result: dict) -> str:
     """One line per tool call for the UI's activity badge."""
     if name == "search_documents":
-        sources = {r["source_file"] for r in result.get("results", [])}
+        sources = {r["source"] for r in result.get("results", [])}
         return f"\"{args.get('query', '')}\" -> {len(result.get('results', []))} chunks from {len(sources)} source(s)"
     if name == "query_account_data":
         detail = ", ".join(f"{k}={v}" for k, v in (args.get("params") or {}).items())
