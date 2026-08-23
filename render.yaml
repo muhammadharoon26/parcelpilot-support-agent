@@ -4,11 +4,22 @@ services:
     runtime: python
     plan: free
     # Both stores are built at release time from the pack committed in data/raw/.
+    # Only the project directory survives from build to run, so the embedding model that
+    # ingestion downloads into ~/.cache is copied in here and restored before the server starts.
+    # Without that the first live question would re-download 80 MB on the request path.
     buildCommand: >-
       pip install -r requirements.txt &&
       python scripts/load_structured_data.py &&
-      python scripts/ingest_documents.py
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+      python scripts/ingest_documents.py &&
+      mkdir -p .render-cache &&
+      cp -r "$HOME/.cache/chroma" .render-cache/ &&
+      rm -f .render-cache/chroma/onnx_models/all-MiniLM-L6-v2/onnx.tar.gz
+    # Single process on purpose: sessions, pending actions and the LangGraph checkpointer
+    # all live in memory, so a second worker would not see the first worker's state.
+    startCommand: >-
+      mkdir -p "$HOME/.cache" &&
+      cp -r .render-cache/chroma "$HOME/.cache/" &&
+      uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
     envVars:
       - key: GEMINI_API_KEY
         sync: false

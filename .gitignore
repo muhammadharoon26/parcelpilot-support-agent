@@ -4,3 +4,4 @@ __pycache__/
 .env
 data/processed/
 .pytest_cache/
+.render-cache/
