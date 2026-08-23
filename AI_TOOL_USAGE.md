@@ -1,11 +1,11 @@
 # AI Tool Usage
 
-I used **Claude Code** (Anthropic's CLI agent) throughout this build.
+I used **Claude Code** throughout this build.
 
-**How I used it.** I wrote a technical design document first — stack, directory layout, access-control
+**How I used it.** I wrote a technical design document first(stack, directory layout, access-control
 rules, the authority ranking, the LangGraph node/edge structure, and an explicit "what to leave out"
-section — and had Claude Code implement against that spec rather than prompting it feature by feature.
-Deciding the architecture up front is what kept the result small; the design doc is in the repo root as
+section) and had Claude Code implement against that spec rather than prompting it feature by feature.
+Deciding the architecture up front is what kept the result small, the design doc is in the repo root as
 `ParcelPilot_Technical_Design_Doc.md`.
 
 Claude Code did the mechanical work: reading the six PDFs and the workbook to derive the data model,
